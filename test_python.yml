@@ -1,5 +1,4 @@
 ---
-
 - name: run Python script
   become: true
   hosts: all
@@ -19,6 +18,6 @@
       ansible.builtin.set_fact:
         os_list: "{{ os_raw_output.stdout | from_json }}"
 
-    - name: print os_list:
-        ansible.builtin.debug:
+    - name: print os_list
+      ansible.builtin.debug:
         var: os_list
