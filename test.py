@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 import json
+import platform
 
-cars = {
-	"manufacturers": [
-	"toyota", "BMW", "Audi",
-	"Ford", "Honda", "Suzuki"
+os_version = {
+	"System": [
+	platform.system(),
+    platform.release(),
+    platform.version()
 	]
 }
 
-print(json.dumps(cars, indent=4))
+print(json.dumps(os_version, indent=4))
