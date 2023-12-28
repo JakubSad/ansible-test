@@ -1,6 +1,7 @@
 ---
 
 - name: run Python script
+  become: true
   hosts: all
   tasks:
     - name: run test.py script
