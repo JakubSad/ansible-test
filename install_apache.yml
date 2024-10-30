@@ -4,7 +4,12 @@
   become: true
   tasks:
 
-  - name: install apache2 package
-    apt:
-      name: apache2
+  - name: Upgrade all packages
+    ansible.builtin.dnf:
+      name: "*"
+      state: latest
       
+  - name: Install the latest version of Apache
+    ansible.builtin.dnf:
+      name: httpd
+      state: latest
