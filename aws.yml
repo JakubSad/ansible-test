@@ -3,4 +3,4 @@
   tasks:
     - name: Display secret
       debug:
-        msg: "Fetched secret is {{ ansible_password }}"
+        msg: "Fetched secret is {{ pass }}"
