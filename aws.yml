@@ -1,6 +1,0 @@
-- name: Test connection using Azure Key Vault secrets
-  hosts: all
-  tasks:
-    - name: Display secret
-      debug:
-        msg: "Fetched secret is {{ pass }}"
