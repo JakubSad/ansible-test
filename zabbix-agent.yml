@@ -2,20 +2,31 @@
 - name: Install and Configure Zabbix Agent
   hosts: all
   become: yes
+  gather_facts: yes  # Ensure facts are gathered
   vars:
     zabbix_agent_version: "6.4"
     zabbix_server_ip: "192.168.1.100"  # Replace with your Zabbix server IP
     zabbix_agent_listen_port: 10050
   tasks:
-    # Determine the operating system family and distribution details
-    - name: Gather OS family and distribution information
-      ansible.builtin.setup:
-        gather_subset:
-          - "ansible_os_family"
-          - "ansible_distribution"
-          - "ansible_distribution_major_version"
-          - "ansible_distribution_release"
-      register: os_info
+    # No need to gather OS information explicitly; facts are gathered automatically
+
+    # Add Zabbix repository and GPG key for Debian/Ubuntu systems
+    - name: Add Zabbix repository on Debian/Ubuntu
+      apt_repository:
+        repo: "deb http://repo.zabbix.com/zabbix/{{ zabbix_agent_version }}/{{ ansible_facts.distribution | lower }} {{ ansible_facts.distribution_release | lower }} main"
+        state: present
+      when: ansible_facts.os_family == "Debian"
+
+    - name: Add Zabbix GPG key on Debian/Ubuntu
+      apt_key:
+        url: "https://repo.zabbix.com/zabbix-official-repo.key"
+        state: present
+      when: ansible_facts.os_family == "Debian"
+
+    - name: Update apt cache on Debian/Ubuntu
+      apt:
+        update_cache: yes
+      when: ansible_facts.os_family == "Debian"
 
     # Add Zabbix repository for RedHat/CentOS systems
     - name: Add Zabbix repository on RedHat/CentOS
@@ -26,38 +37,33 @@
         gpgcheck: yes
         gpgkey: "https://repo.zabbix.com/RPM-GPG-KEY-ZABBIX-A14FE591"
         enabled: yes
-      when: os_info.ansible_facts.ansible_os_family == "RedHat"
+      when: ansible_facts.os_family == "RedHat"
 
-    # Check if Zabbix Agent is already installed
-    - name: Gather installed packages facts
-      ansible.builtin.package_facts:
-
-    # Install Zabbix Agent on RedHat/CentOS if not installed
-    - name: Install Zabbix Agent on RedHat/CentOS
-      ansible.builtin.yum:
+    # Install Zabbix Agent on Debian/Ubuntu
+    - name: Install Zabbix Agent on Debian/Ubuntu
+      apt:
         name: zabbix-agent
         state: present
-      when:
-        - os_info.ansible_facts.ansible_os_family == "RedHat"
-        - "'zabbix-agent' not in ansible_facts.packages"
+      when: ansible_facts.os_family == "Debian"
 
-    # Check if the Zabbix Agent configuration file exists
-    - name: Check for existing Zabbix Agent configuration
-      ansible.builtin.stat:
-        path: /etc/zabbix/zabbix_agentd.conf
-      register: zabbix_conf
+    # Install Zabbix Agent on RedHat/CentOS
+    - name: Install Zabbix Agent on RedHat/CentOS
+      yum:
+        name: zabbix-agent
+        state: present
+      when: ansible_facts.os_family == "RedHat"
 
     # Backup existing Zabbix Agent configuration if it exists
     - name: Backup existing Zabbix Agent configuration
-      ansible.builtin.copy:
+      copy:
         src: /etc/zabbix/zabbix_agentd.conf
         dest: /etc/zabbix/zabbix_agentd.conf.backup
         remote_src: yes
-      when: zabbix_conf.stat.exists
+      when: ansible_facts.packages.get('zabbix-agent') is defined
 
     # Apply the new Zabbix Agent configuration from the template
     - name: Configure Zabbix Agent
-      ansible.builtin.template:
+      template:
         src: zabbix_agentd.conf.j2
         dest: /etc/zabbix/zabbix_agentd.conf
         owner: root
@@ -66,18 +72,17 @@
 
     # Ensure the Zabbix Agent service is enabled and running
     - name: Ensure Zabbix Agent service is enabled and running
-      ansible.builtin.service:
+      service:
         name: zabbix-agent
         state: started
         enabled: yes
 
-    # Gather facts about services
-    - name: Gather service facts
-      ansible.builtin.service_facts:
-
     # Verify that Zabbix Agent service is running
     - name: Verify Zabbix Agent is running
-      ansible.builtin.fail:
-        msg: "Zabbix Agent service is not running."
-      when:
-        - ansible_facts.services['zabbix-agent'].state != 'running'
+      shell: systemctl is-active zabbix-agent
+      register: zabbix_agent_status
+      failed_when: zabbix_agent_status.stdout.strip() != "active"
+
+    - name: Zabbix Agent service status
+      debug:
+        msg: "Zabbix Agent service is {{ zabbix_agent_status.stdout.strip() }}"
