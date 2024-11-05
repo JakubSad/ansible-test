@@ -68,11 +68,12 @@
     # Apply the new Zabbix Agent configuration from the template
     - name: Configure Zabbix Agent
       template:
-        src: zabbix_agentd.conf.j2
+        src: templates/zabbix_agentd.conf.j2
         dest: /etc/zabbix/zabbix_agentd.conf
         owner: root
         group: root
-        mode: 0644
+        mode: '0644'
+
 
     # Ensure the Zabbix Agent service is enabled and running
     - name: Ensure Zabbix Agent service is enabled and running
