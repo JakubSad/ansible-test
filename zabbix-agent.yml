@@ -8,8 +8,6 @@
     zabbix_server_ip: "192.168.1.100"  # Replace with your Zabbix server IP
     zabbix_agent_listen_port: 10050
   tasks:
-    # No need to gather OS information explicitly; facts are gathered automatically
-
     # Add Zabbix repository and GPG key for Debian/Ubuntu systems
     - name: Add Zabbix repository on Debian/Ubuntu
       apt_repository:
@@ -53,13 +51,19 @@
         state: present
       when: ansible_facts.os_family == "RedHat"
 
+    # Check if the Zabbix Agent configuration file exists
+    - name: Check if Zabbix Agent configuration file exists
+      stat:
+        path: /etc/zabbix/zabbix_agentd.conf
+      register: zabbix_conf
+
     # Backup existing Zabbix Agent configuration if it exists
     - name: Backup existing Zabbix Agent configuration
       copy:
         src: /etc/zabbix/zabbix_agentd.conf
         dest: /etc/zabbix/zabbix_agentd.conf.backup
         remote_src: yes
-      when: ansible_facts.packages.get('zabbix-agent') is defined
+      when: zabbix_conf.stat.exists
 
     # Apply the new Zabbix Agent configuration from the template
     - name: Configure Zabbix Agent
