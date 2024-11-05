@@ -68,7 +68,7 @@
     # Apply the new Zabbix Agent configuration from the template
     - name: Configure Zabbix Agent
       template:
-        src: templates/zabbix_agentd.conf.j2
+        src: zabbix_agentd.conf.j2
         dest: /etc/zabbix/zabbix_agentd.conf
         owner: root
         group: root
