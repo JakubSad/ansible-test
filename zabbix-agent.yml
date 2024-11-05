@@ -19,7 +19,7 @@
 
     # Add Zabbix repository for RedHat/CentOS systems
     - name: Add Zabbix repository on RedHat/CentOS
-      ansible.builtin.dnf_repository:
+      yum_repository:
         name: zabbix
         description: "Zabbix Official Repository"
         baseurl: "https://repo.zabbix.com/zabbix/{{ zabbix_agent_version }}/rhel/{{ ansible_facts.distribution_major_version }}/$basearch/"
@@ -34,7 +34,7 @@
 
     # Install Zabbix Agent on RedHat/CentOS if not installed
     - name: Install Zabbix Agent on RedHat/CentOS
-      ansible.builtin.dnf:
+      ansible.builtin.yum:
         name: zabbix-agent
         state: present
       when:
