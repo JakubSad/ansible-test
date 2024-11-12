@@ -33,11 +33,6 @@
       notify:
         - Restart logrotate
 
-    - name: Run logrotate
-      command: logrotate /etc/logrotate.conf
-      args:
-        creates: /var/lib/logrotate/status
-
   handlers:
     - name: Restart logrotate
       service:
