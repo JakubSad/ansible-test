@@ -1,0 +1,33 @@
+{% for log in log_files %}
+{{ log }} {
+    {% if logrotate_options.daily %}
+    daily
+    {% endif %}
+    {% if logrotate_options.rotate %}
+    rotate {{ logrotate_options.rotate }}
+    {% endif %}
+    {% if logrotate_options.compress %}
+    compress
+    {% endif %}
+    {% if logrotate_options.missingok %}
+    missingok
+    {% endif %}
+    {% if logrotate_options.notifempty %}
+    notifempty
+    {% endif %}
+    {% if logrotate_options.create %}
+    create
+    {% endif %}
+    {% if logrotate_options.dateext %}
+    dateext
+    {% endif %}
+    {% if logrotate_options.sharedscripts %}
+    sharedscripts
+    {% endif %}
+    {% if logrotate_options.postrotate_script %}
+    postrotate
+        {{ logrotate_options.postrotate_script | indent(4) }}
+    endscript
+    {% endif %}
+}
+{% endfor %}
