@@ -82,6 +82,12 @@
         state: started
         enabled: yes
 
+    - name: Install Zabbix
+    
+  
+
+    
+
     # Verify that Zabbix Agent service is running
     - name: Verify Zabbix Agent is running
       shell: systemctl is-active zabbix-agent

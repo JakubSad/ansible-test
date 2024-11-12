@@ -1,0 +1,45 @@
+---
+- name: Logrotate configuration
+  hosts: all
+  become: yes
+  vars:
+    logrotate_config_path: /etc/logrotate.d/custom_logs
+    log_files:
+      - /var/log/messages
+      - /var/log/secure
+      - /var/log/zabbix/zabbix_agentd.log
+    logrotate_options:
+      daily: true
+      rotate: 7
+      compress: true
+      missingok: true
+      notifempty: true
+      create: true
+      dateext: true
+      sharedscripts: true
+      postrotate_script: |
+        systemctl reload zabbix-agent.service > /dev/null 2>/dev/null || true
+  tasks:
+    - name: Check if logrotate is installed
+      yum:
+        name: logrotate
+        state: present
+
+    - name: Make config for logrotate
+      template:
+        src: logrotate_custom.j2
+        dest: "{{ logrotate_config_path }}"
+        mode: '0644'
+      notify:
+        - Restart logrotate
+
+    - name: Run logrotate
+      command: logrotate /etc/logrotate.conf
+      args:
+        creates: /var/lib/logrotate/status
+
+  handlers:
+    - name: Restart logrotate
+      service:
+        name: logrotate
+        state: restarted
