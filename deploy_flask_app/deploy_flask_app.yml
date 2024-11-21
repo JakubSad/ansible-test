@@ -1,0 +1,74 @@
+---
+- name: Install dependencies and build flask app
+  hosts: all
+  become: yes
+  vars:
+    app_dir: /opt/flask_app
+  tasks:
+
+  - name: Instal packages
+    yum:
+      name:
+        - yum-utils
+      state: present
+
+  - name: Add docker repository
+    yum_repository:
+      name: docker-ce-stable
+      description: Docker CE Stable - $basearch
+      baseurl: https://download.docker.com/linux/centos/9/$basearch/stable
+      enabled: yes
+      gpgcheck: yes
+      gpgkey: https://download.docker.com/linux/centos/gpg
+
+  - name: Docker CE install
+    yum:
+      name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+      state: present
+
+  - name: Run and enable Docker
+    service:
+      name: docker
+      state: started
+      enabled: yes
+
+  - name: Add user to docker group
+    user:
+      name: "{{ ansible_user }}"
+      groups: docker
+      append: yes
+
+  - name: Create app directory
+    file:
+      path: "{{ app_dir }}"
+      state: directory
+      owner: "{{ ansible_user }}"
+      group: "{{ ansible_user }}"
+
+  - name: Copy files
+    copy:
+      src: files/
+      dest: "{{ app_dir }}/"
+      owner: "{{ ansible_user }}"
+      group: "{{ ansible_user }}"
+      mode: '0755'
+
+  - name: Build image
+    community.docker.docker_image:
+      name: flask_app
+      build:
+        path: "{{ app_dir }}"
+
+  - name: Run Container
+    community.docker.docker_container:
+      name: flask_app_container
+      image: flask_app
+      state: started
+      restart_policy: always
+      ports:
+        - "80:80"
