@@ -4,6 +4,8 @@
   become: yes
   vars:
     app_dir: /opt/flask_app
+  collections:
+    - community.docker
   tasks:
 
   - name: Instal packages
