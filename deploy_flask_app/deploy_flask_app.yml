@@ -6,12 +6,6 @@
     app_dir: /opt/flask_app
   tasks:
 
-  - name: Instalacja niezbędnych pakietów
-    yum:
-      name:
-        - yum-utils
-      state: present
-
   - name: Dodanie repozytorium Dockera
     yum_repository:
       name: docker-ce-stable
