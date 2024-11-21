@@ -1,12 +1,12 @@
 ---
-- name: Instalacja Dockera i wdrożenie aplikacji Flask
+- name: Install Docker and run flask app
   hosts: all
   become: yes
   vars:
     app_dir: /opt/flask_app
   tasks:
 
-  - name: Dodanie repozytorium Dockera
+  - name: Add Docker repository
     yum_repository:
       name: docker-ce-stable
       description: Docker CE Stable - $basearch
@@ -15,7 +15,7 @@
       gpgcheck: yes
       gpgkey: https://download.docker.com/linux/centos/gpg
 
-  - name: Instalacja Docker CE
+  - name: Install Docker CE
     yum:
       name:
         - docker-ce
@@ -25,26 +25,26 @@
         - docker-compose-plugin
       state: present
 
-  - name: Uruchomienie i włączenie usługi Dockera
+  - name: Start and enable Docker service
     service:
       name: docker
       state: started
       enabled: yes
 
-  - name: Dodanie użytkownika do grupy docker
+  - name: Add User to docker group
     user:
       name: "{{ ansible_user }}"
       groups: docker
       append: yes
 
-  - name: Utworzenie katalogu aplikacji
+  - name: Create app directory
     file:
       path: "{{ app_dir }}"
       state: directory
       owner: "{{ ansible_user }}"
       group: "{{ ansible_user }}"
 
-  - name: Skopiowanie plików aplikacji
+  - name: Copy app files
     copy:
       src: files/
       dest: "{{ app_dir }}/"
@@ -52,14 +52,14 @@
       group: "{{ ansible_user }}"
       mode: '0755'
 
-  - name: Budowanie obrazu Dockera
+  - name: Build Image
     shell: |
       docker build -t flask_app {{ app_dir }}
     args:
       chdir: "{{ app_dir }}"
     become: yes
 
-  - name: Uruchomienie kontenera Dockera
+  - name: Run Container
     shell: |
       docker run -d --name flask_app_container -p 80:80 --restart always flask_app
     become: yes
