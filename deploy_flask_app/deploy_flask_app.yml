@@ -1,20 +1,18 @@
 ---
-- name: Install dependencies and build flask app
-  hosts: all
+- name: Instalacja Dockera i wdrożenie aplikacji Flask
+  hosts: rhel9_servers
   become: yes
   vars:
     app_dir: /opt/flask_app
-  collections:
-    - community.docker
   tasks:
 
-  - name: Instal packages
+  - name: Instalacja niezbędnych pakietów
     yum:
       name:
         - yum-utils
       state: present
 
-  - name: Add docker repository
+  - name: Dodanie repozytorium Dockera
     yum_repository:
       name: docker-ce-stable
       description: Docker CE Stable - $basearch
@@ -23,7 +21,7 @@
       gpgcheck: yes
       gpgkey: https://download.docker.com/linux/centos/gpg
 
-  - name: Docker CE install
+  - name: Instalacja Docker CE
     yum:
       name:
         - docker-ce
@@ -33,26 +31,26 @@
         - docker-compose-plugin
       state: present
 
-  - name: Run and enable Docker
+  - name: Uruchomienie i włączenie usługi Dockera
     service:
       name: docker
       state: started
       enabled: yes
 
-  - name: Add user to docker group
+  - name: Dodanie użytkownika do grupy docker
     user:
       name: "{{ ansible_user }}"
       groups: docker
       append: yes
 
-  - name: Create app directory
+  - name: Utworzenie katalogu aplikacji
     file:
       path: "{{ app_dir }}"
       state: directory
       owner: "{{ ansible_user }}"
       group: "{{ ansible_user }}"
 
-  - name: Copy files
+  - name: Skopiowanie plików aplikacji
     copy:
       src: files/
       dest: "{{ app_dir }}/"
@@ -60,17 +58,14 @@
       group: "{{ ansible_user }}"
       mode: '0755'
 
-  - name: Build image
-    community.docker.docker_image:
-      name: flask_app
-      build:
-        path: "{{ app_dir }}"
+  - name: Budowanie obrazu Dockera
+    shell: |
+      docker build -t flask_app {{ app_dir }}
+    args:
+      chdir: "{{ app_dir }}"
+    become: yes
 
-  - name: Run Container
-    community.docker.docker_container:
-      name: flask_app_container
-      image: flask_app
-      state: started
-      restart_policy: always
-      ports:
-        - "80:80"
+  - name: Uruchomienie kontenera Dockera
+    shell: |
+      docker run -d --name flask_app_container -p 80:80 --restart always flask_app
+    become: yes
