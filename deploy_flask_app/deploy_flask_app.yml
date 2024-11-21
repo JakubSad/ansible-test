@@ -1,6 +1,6 @@
 ---
 - name: Instalacja Dockera i wdrożenie aplikacji Flask
-  hosts: rhel9_servers
+  hosts: all
   become: yes
   vars:
     app_dir: /opt/flask_app
